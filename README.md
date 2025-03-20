@@ -66,10 +66,32 @@
        l) WAITF (Waiting finish):
           此状态操作了数据输入和数据输出的控制信号。
    
-3. RISC_V FPGA 的集成(由'ascon_core_top.v'与'main.c'实现)
-   3.1 架构
+3. Vivado Testbench仿真
+   3.1 时钟生成：
+       时钟（clk）信号每5个时间单位翻转一次，生成一个周期为10个时间单位的时钟。
+   3.2 复位序列：
+       复位（rstn）信号在仿真开始时被置位（低电平持续100个时间单位），然后被取消置位以开始正常操作。
+   3.3 测试用状态机：
+       测试平台使用一个简单的状态机来模拟Ascon核心的不同输入和输出阶段。该状态机控制数据流向Ascon_core模块：
+       状态 0：置位开始信号（start），使核心进入初始化状态（IVS）。
+       状态 1：请求输入数据（dinReq被置位），并将Din设置为随机数（nonce）值。
+       状态 2：等待dinAck信号，表示输入数据已被接受。
+       状态 3：将Din设置为最后一块数据（LastData），并置位last_block信号。
+       状态 4：再次发出数据请求，将Din设置为最后一块数据（LastData），并置位last_block信号。
+       状态 5-8：根据控制信号提供加密或解密的明文/密文。
+       状态 9：等待finished信号，表示核心已完成处理，并返回到初始状态。    
+   3.4 数据读取：
+       测试平台持续监控doReq信号，当该信号被置位时，将输出数据（Dout）捕获到read_data寄存器中。
+   3.5 数据读取：
+       测试平台持续监控doReq信号，当该信号被置位时，将输出数据（Dout）捕获到read_data寄存器中。
+   3.6 资源占用报告：
+       切片查找表 切片寄存器 F7多路复用器 F8多路复用器 绑定IOB 全局缓冲控制器
+         1096       483          36           18        524         1
+   
+4. RISC_V FPGA的集成(由'ascon_core_top.v'与'main.c'实现)
+   4.1 架构
        RVFPGA中的SoC（System on Chip）名为SweRVolfX，构建在SweRV EH1 Core Comple上，SweRV EH1核心使用AXI总线，而外设则使用Wishbone总线，通过AXI-Wishbone桥接进行互连。
-   3.2 设计过程
+   4.2 设计过程
        a) 创建ascon模块（ascon_core.v），并且独立仿真通过。
        b) 创建一个wrapper模块（ascon_core_top.v），该模块有wishbone 从机接口,并且例化上述独立仿真通过的ascon_core.v模块。
        c) 在swervolf_core.v模块中，实例化上述wrapper，并且修改wb_intercon.vh添加ascon模块的wishbone总线接口。
@@ -77,7 +99,7 @@
        e) 修改wb_mux的num_slaves、MATCH_ADDR和MATCH_MASK，num_slaves增加1，由7变为8，MATCH_ADDR和MATCH_MASK为ascon外设分配地址，ascon的基地址分配为0x80003000，前面的地址被GPIO等7个外设所占据。
        f) 创建src/SweRVolfSoC/Peripherals/ascon文件夹，并且将ascon相关的文件都放在该文件夹下。
        g) 编写测试的c文件，驱动ascon外设模块，通过读写ascon的寄存器的方式实现。
-   3.3 ascon_core_top实现的逻辑：
+   4.3 ascon_core_top实现的逻辑：
        hs_top的端口信号定义如下，是标准的wishbone接口。
        module ascon_core_top(
        wb_clk_i, wb_rst_i, wb_cyc_i, wb_adr_i, wb_dat_i, wb_sel_i, wb_we_i, wb_stb_i, wb_dat_o, wb_ack_o, wb_err_o, wb_inta_o）；
@@ -111,7 +133,7 @@
        end
        这些寄存器作为ascon模块的输入信号。
        Ascon模块的输出信号也可以暂存在寄存器中，由c代码驱动wishbone总线进行读取。
-   3.4 调试
+   4.4 调试
        C代码通过wishbone总线对ascon外设的寄存器进行读写，逻辑与对ascon模块单独进行操作的testbench的逻辑实现一致。通过宏定义定义两个读取寄存器的函数，READ_HS读取地址为dir的寄存器，WRITE_HS将value写入地址为dir的寄存器中。
        #define READ_HS(dir) (*(volatile unsigned *)dir)
        #define WRITE_HS(dir, value) { (*(volatile unsigned *)dir) = (value); }
