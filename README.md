@@ -6,7 +6,7 @@
    https://zhuanlan.zhihu.com/p/576265874
    https://lmzyoyo.top/archives/asconencryption
 
-2. Verilog实现(由'ascon_core.v'与'ascon_core.v'实现)
+2. Verilog实现(由'ascon_core.v'与'SubstBlock.v'实现)
    2.1 核心设计总览
        Ascon核心设计主要包括以下组件:
        a) 输入密钥随机数和数据处理:
@@ -66,7 +66,7 @@
        l) WAITF (Waiting finish):
           此状态操作了数据输入和数据输出的控制信号。
    
-3. RISC_V FPGA 的集成
+3. RISC_V FPGA 的集成(由'ascon_core_top.v'与'main.c'实现)
    3.1 架构
        RVFPGA中的SoC（System on Chip）名为SweRVolfX，构建在SweRV EH1 Core Comple上，SweRV EH1核心使用AXI总线，而外设则使用Wishbone总线，通过AXI-Wishbone桥接进行互连。
    3.2 设计过程
