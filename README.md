@@ -2,9 +2,10 @@
 基于RISC-V-FPGA的ASCON加密核心 ASCON Encryption Core Based on RISC-V-FPGA
 # ASCON加密算法的RISC-V硬件实现
 
-1. ASCON加密协议的介绍可从以下两篇帖子内详细了解:
+1. ASCON加密协议的介绍可从以下链接详细了解:
    https://zhuanlan.zhihu.com/p/576265874
    https://lmzyoyo.top/archives/asconencryption
+   https://ascon.isec.tugraz.at/files/asconv12-nist.pdf
 
 2. Verilog实现(由'ascon_core.v'与'SubstBlock.v'实现)
    2.1 核心设计总览
